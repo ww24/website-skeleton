@@ -17,7 +17,7 @@ gulp.task("browserify", function () {
     gulp.src("src/js/ui.js")
         .pipe(plg.plumber())
         .pipe(plg.browserify())
-        .pipe(plg.uglify())
+        .pipe(plg.uglify({preserveComments: "some"}))
         .pipe(gulp.dest("dist/js"))
         .pipe(plg.connect.reload());
   });
