@@ -4,51 +4,49 @@
  */
 
 var gulp = require("gulp"),
-    gutil = require("gulp-util"),
-    less = require("gulp-less"),
-    minifyCSS = require("gulp-minify-css"),
-    coffee = require("gulp-coffee"),
-    browserify = require("gulp-browserify"),
-    uglify = require("gulp-uglify"),
-    connect = require("gulp-connect"),
-    watch = require("gulp-watch");
+    plg = require("gulp-load-plugins")();
 
-gulp.task("connect", connect.server({
+gulp.task("connect", plg.connect.server({
   root: ["dist"],
   port: 8000,
   livereload: true
 }));
 
-gulp.task("less", function () {
-  watch({glob: "src/less/**/*.less"})
-      .pipe(less())
-      .pipe(minifyCSS())
-      .pipe(gulp.dest("dist/css"))
-      .pipe(connect.reload());
+gulp.task("browserify", function () {
+  plg.watch({glob: "src/js/**/**.js", emitOnGlob: false}, function () {
+    gulp.src("src/js/ui.js")
+        .pipe(plg.plumber())
+        .pipe(plg.browserify())
+        .pipe(plg.uglify())
+        .pipe(gulp.dest("dist/js"))
+        .pipe(plg.connect.reload());
+  });
 });
 
 gulp.task("coffee", function () {
-  watch({glob: "src/coffee/**/*.coffee"})
-      .pipe(coffee({bare: true}))
-      .on("error", gutil.log)
+  plg.watch({glob: "src/coffee/**/*.coffee"})
+      .pipe(plg.plumber())
+      .pipe(plg.coffee({bare: true}))
       .pipe(gulp.dest("src/js"));
 });
 
-gulp.task("browserify", function () {
-  watch({glob: "src/js/**/**.js", emitOnGlob: false}, function () {
-    gulp.src("src/js/ui.js")
-        .pipe(browserify())
-        .pipe(uglify())
-        .pipe(gulp.dest("dist/js"))
-        .pipe(connect.reload());
+gulp.task("less", function () {
+  plg.watch({glob: "src/less/**/*.less"}, function () {
+    gulp.src("src/less/**/*.less")
+        .pipe(plg.plumber())
+        .pipe(plg.less())
+        .pipe(plg.concat("style.css"))
+        .pipe(plg.minifyCss())
+        .pipe(gulp.dest("dist/css"))
+        .pipe(plg.connect.reload());
   });
 });
 
 gulp.task("static", function () {
-  watch({glob: "dist/**/**.html", emitOnGlob: false})
-      .pipe(connect.reload());
-  watch({glob: "dist/img/**/**", emitOnGlob: false})
-      .pipe(connect.reload());
+  plg.watch({glob: "dist/**/**.html", emitOnGlob: false})
+      .pipe(plg.connect.reload());
+  plg.watch({glob: "dist/img/**/**", emitOnGlob: false})
+      .pipe(plg.connect.reload());
 });
 
-gulp.task("default", ["connect", "less", "browserify", "coffee", "static"]);
+gulp.task("default", ["connect", "browserify", "coffee", "less", "static"]);
